@@ -2,7 +2,7 @@
 #include <a_mysql>
 #include <float>
 
-#include <mm\colors>
+#include <stuff\defines>
 
 #define MYSQL_USERNAME 	"port_2489"
 #define MYSQL_DATABASE 	"port_2489"
@@ -14,7 +14,7 @@ native WP_Hash(buffer[], len, const str[]);
 new mCon, qString[1001];
 
 
-forward getConnection();
+//forward getConnection();
 
 //ACCOUNT-RELATED FUNCTIONS
 forward DB_PlayerBanCheck(playerid);
@@ -73,7 +73,7 @@ public OnPlayerDisconnect(playerid, reason)
 
 /* ---- BEGIN OF ACCOUNT-RELATED FUNCTIONS ---- */
 
-public getConnection() { return mCon; }
+//public getConnection() { return mCon; }
 
 public DB_PlayerBanCheck(playerid)
 {
