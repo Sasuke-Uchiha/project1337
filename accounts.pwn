@@ -3,8 +3,10 @@
 #include <zcmd>
 #include <sscanf2>
 
-#include <mm\colors>
-#include <mm\dialogs>
+#include <stuff\defines>
+
+#define DIALOG_REGISTER 0
+#define DIALOG_LOGIN 1
 
 
 forward SetLoginData(playerid,aid,admin,vip,kills,deaths,money);
@@ -19,17 +21,11 @@ enum pInfo {
 	Admin,
 	Vip,
 	Money,
-	Time_Money_Given,
 	Kills,
 	Deaths,
 	Hours,
 	Minutes,
-	Seconds,
-	bool:Radio,
-	MMPoints,
-	VipJoinMsg[128],
-	bool:PM,
-	account_exists
+	Seconds
 }
 
 new Player[MAX_PLAYERS][pInfo];
@@ -91,7 +87,6 @@ public OnPlayerDisconnect(playerid, reason)
 	Player[playerid][Deaths] = 0;
 	Player[playerid][Money] = 0;
 
-	Player[playerid][account_exists] = 0;
 	Player[playerid][Logged] = false;
 
 	format(leavemsg,sizeof(leavemsg),"%s (%i) has left the Server.",Player[playerid][Name],playerid);
@@ -109,15 +104,6 @@ public OnPlayerDeath(playerid, killerid, reason)
 	Player[playerid][Deaths]++;
 	if(killerid != INVALID_PLAYER_ID)
 		Player[killerid][Kills]++;
-
- /*
-	switch(Player[killerid][Kills])
-	{
-	    case 10: { break; }
-	    case 100: { break;}
-	    case 1000: { break;}
-	}
- */
 	return 1;
 }
 
