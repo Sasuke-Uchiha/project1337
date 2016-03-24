@@ -1,5 +1,4 @@
 #include <a_samp>
-#include <a_mysql>
 #include <zcmd>
 #include <sscanf2>
 
