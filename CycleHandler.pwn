@@ -1,60 +1,74 @@
-//CYCLE HANDLER (FS)
+//GAMEMODE
 #include <a_samp>
 #include <stuff\defines>
 
-enum MAP_INFO_enum
+new mapid,maptype,mMin,mSec,mTimer;
+
+forward GM_StartTimer(time);
+forward TimerFunc();
+forward GM_Restart();
+
+public OnGameModeInit()
 {
-    MapID, //A unique Map ID.
-    MapType, // The Type of Map.
-    MapName[50], // Name of Map.
-    MapMin, // Map Time in Mins.
-    MapSec, // Map Time in Secs.
-    MapBy[MAX_PLAYER_NAME] //Name of user who made the map.
-}
-new MapInfo[][MAP_INFO_enum] = {
-    {1,MAP_TYPE_RACE,"MapName",5,30,"TheUser"}
-};    
+	mapid = CallRemoteFunction("cycle_getcurrentid",""); //Get's map id from CycleHandler
+	maptype = CallRemoteFunction("cycle_getcurrentmode",""); //Get's map type from CycleHandler
 
-new MaxMaps;
-new counter;
+	CallRemoteFunction("maphandler_init","i",mapid); //initialize the map handler	
 
-forward cycle_nextMission();
-forward cycle_getcurrentid();
-forward cycle_getcurrentmode();
-forward cycle_getcurrentmaptime(variable);
-//forward cycle_sendmissionname();
-
-public OnFilterScriptInit()
-{
-    //load mission IDs and Names from Database
-    counter = 0;
-    MaxMaps=sizeof(MapInfo);
+	switch(maptype)
+	{
+		case MAP_TYPE_BOMBING: SendRconCommand("loadfs bombing");
+		case MAP_TYPE_DM: SendRconCommand("loadfs deathmatch");
+		case MAP_TYPE_STEALING: SendRconCommand("loadfs stealing");
+		case MAP_TYPE_NO_RESPAWN_DM: SendRconCommand("loadfs lms");
+		case MAP_TYPE_NO_RESPAWN_TDM: SendRconCommand("loadfs lts");
+		case MAP_TYPE_TDM: SendRconCommand("loadfs tdm");
+		default: SendRconCommand("loadfs race");
+	}	
+	//CallRemoteFunction("cycle_sendmissionname",""); We just don't need it.
 }
 
-//Cross-Scripting
-public cycle_nextMission()
+public GM_StartTimer(time) //maphandler
 {
-    if(counter < MaxMaps -1) counter++;
-    else counter = 0;
-    new string[124];
-    format(string,sizeof(string),"[CYCLE]"); // For later to easily add different type of cycles, currnt is only normal.
-    switch(MapInfo[counter][MapType])
-    {
-        case 1: format(string,sizeof(string),"<!> %s Next Mission is Bombing: %s. | Map by %s.",string,MapInfo[counter][MapName],MapInfo[counter][MapBy]);
-        default: format(string,sizeof(string),"<!> %s Next Mission is Race: %s. | Map by %s.",string,MapInfo[counter][MapName],MapInfo[counter][MapBy]);
-    }
-    SendClientMessageToAll(COLOR_CYCLE,string);
+	mMin = CallRemoteFunction("cycle_getcurrentmaptime","i",0);
+	mSec = CallRemoteFunction("cycle_getcurrentmaptime","i",1);
+	mTimer = SetTimer("TimeFunc",1000,true);
 }
 
-public cycle_getcurrentid() return MapInfo[counter][MapID];
-public cycle_getcurrentmode() return MapInfo[counter][MapType];
-public cycle_getcurrentmaptime(variable) // variable 0 is for Mins and 1 is for seconds
+public TimerFunc()
 {
-    if(variable == 0) return MapInfo[counter][MapMin];
-    else return MapInfo[counter][MapSec];
+	new string[10];
+	mSec--;
+	if(mMin < 10) format(string,sizeof(string),"0%d",mMin);
+	else format(string,sizeof(string),"%d",mMin);
+	if(mSec < 10) format(string,sizeof(string),"%s:0%d",string,mSec);
+	else format(string,sizeof(string),"%s:%d",string,mSec);
+	CallRemoteFunction("textdraw_UpdateMissionClock","ii",mMin,mSec);//Clock Textdraw update should be added here.
+	if(mSec < 1 && mMin > 0) 
+	{ 
+		mSec = 59;
+		mMin--;
+	}
+	else if(mSec == 0 && mMin == 0)
+	{
+		CallRemoteFunction("maphandler_reset","");
+		CallRemoteFunction("cycle_nextMission","");
+
+		switch(maptype)
+		{
+			case MAP_TYPE_BOMBING: SendRconCommand("unloadfs bombing");
+			case MAP_TYPE_DM: SendRconCommand("unloadfs deathmatch");
+			case MAP_TYPE_STEALING: SendRconCommand("unloadfs stealing");
+			case MAP_TYPE_NO_RESPAWN_DM: SendRconCommand("unloadfs lms");
+			case MAP_TYPE_NO_RESPAWN_TDM: SendRconCommand("unloadfs lts");
+			case MAP_TYPE_TDM: SendRconCommand("unloadfs tdm");
+			default: SendRconCommand("unloadfs race");
+		}
+		
+		//rewards etc... DO NOT ADD THEM NOW!
+		KillTimer(mTimer);
+		SetTimer("GM_Restart",3000,false); //3 sec
+	}
 }
 
-/*public cycle_sendmissionname()
-{
-    //CallRemoteFunction("GM_SetMissionName","s",MapName[counter]);
-}*/ //We might not need this, when we use /cycle command, we can call remote function and make dialog from here.
+public GM_Restart() { return SendRconCommand("gmx"); }
